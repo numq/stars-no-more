@@ -1,22 +1,18 @@
 package io.github.numq.starsnomore.dashboard
 
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.TooltipArea
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Sort
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.input.pointer.PointerButton
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.numq.starsnomore.project.Project
@@ -34,20 +30,17 @@ fun DashboardView(feature: DashboardFeature = koinInject()) {
 
     val listState = rememberLazyListState()
 
+    var isContextMenuVisible by remember { mutableStateOf(false) }
+
     LaunchedEffect(state.selectedSortingCriteria, state.isAscending) {
         listState.scrollToItem(0)
     }
 
     Scaffold(
-        modifier = Modifier.fillMaxSize(), floatingActionButton = {
-            FloatingActionButton(onClick = {
-                coroutineScope.launch {
-                    feature.execute(DashboardCommand.GetProjects)
-                }
-            }, modifier = Modifier.clip(CircleShape)) {
-                Icon(Icons.Default.Refresh, null)
-            }
-        }, floatingActionButtonPosition = FabPosition.Center
+        modifier = Modifier.fillMaxSize()
+            .onClick(matcher = PointerMatcher.mouse(PointerButton.Secondary), onClick = {
+                isContextMenuVisible = true
+            }), floatingActionButtonPosition = FabPosition.Center
     ) { paddingValues ->
         Column(
             modifier = Modifier.fillMaxSize().padding(paddingValues),
@@ -60,19 +53,23 @@ fun DashboardView(feature: DashboardFeature = koinInject()) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 SortingCriteria.values.forEach { criteria ->
-                    TooltipArea(tooltip = {
-                        criteria.tooltip?.let { tooltip ->
-                            Card {
-                                Box(modifier = Modifier.padding(4.dp), contentAlignment = Alignment.Center) {
-                                    Text(text = tooltip)
+                    TooltipArea(
+                        tooltip = {
+                            criteria.tooltip?.let { tooltip ->
+                                Card {
+                                    Box(modifier = Modifier.padding(4.dp), contentAlignment = Alignment.Center) {
+                                        Text(text = tooltip)
+                                    }
                                 }
                             }
-                        }
-                    }, modifier = Modifier.weight(1f).height(IntrinsicSize.Max).clickable {
-                        coroutineScope.launch {
-                            feature.execute(DashboardCommand.SortProjects(criteria = criteria))
-                        }
-                    }.padding(vertical = 8.dp, horizontal = 4.dp)) {
+                        },
+                        modifier = Modifier.weight(1f).height(IntrinsicSize.Max)
+                            .clickable(enabled = !state.isLoadingProjects) {
+                                coroutineScope.launch {
+                                    feature.execute(DashboardCommand.SortProjects(criteria = criteria))
+                                }
+                            }.padding(vertical = 8.dp, horizontal = 4.dp)
+                    ) {
                         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -95,7 +92,7 @@ fun DashboardView(feature: DashboardFeature = koinInject()) {
                                     Icon(
                                         imageVector = Icons.AutoMirrored.Filled.Sort,
                                         contentDescription = null,
-                                        modifier = Modifier.size(16.dp).rotate(if (state.isAscending) 0f else 180f),
+                                        modifier = Modifier.size(16.dp).rotate(if (state.isAscending) 180f else 0f),
                                         tint = MaterialTheme.colorScheme.primary
                                     )
                                 } else {
@@ -108,16 +105,30 @@ fun DashboardView(feature: DashboardFeature = koinInject()) {
             }
             Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
                 when {
-                    state.projects.isEmpty() -> CircularProgressIndicator()
+                    state.isLoadingProjects -> CircularProgressIndicator()
 
-                    else -> LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        state = listState,
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(space = 8.dp, alignment = Alignment.CenterVertically)
-                    ) {
-                        items(state.projects, key = Project::id) { project ->
-                            ProjectRow(modifier = Modifier.fillMaxWidth(), project = project)
+                    state.projects.isEmpty() -> Text("No repositories found")
+
+                    else -> ContextMenuArea(items = {
+                        listOf(
+                            ContextMenuItem("Refresh data", onClick = {
+                                coroutineScope.launch {
+                                    feature.execute(DashboardCommand.UpdateLoadingState(isLoadingProjects = true))
+
+                                    feature.execute(DashboardCommand.GetProjects)
+                                }
+                            })
+                        )
+                    }) {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            state = listState,
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(space = 8.dp, alignment = Alignment.Top)
+                        ) {
+                            items(state.projects, key = Project::id) { project ->
+                                ProjectRow(modifier = Modifier.fillMaxWidth(), project = project)
+                            }
                         }
                     }
                 }

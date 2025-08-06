@@ -11,10 +11,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import io.github.numq.starsnomore.trend.Trend
-import io.github.numq.starsnomore.trend.TrendItem
+import io.github.numq.starsnomore.growth.Growth
+import io.github.numq.starsnomore.growth.GrowthChart
+import io.github.numq.starsnomore.growth.GrowthItem
 import java.text.SimpleDateFormat
 import java.util.*
+
+private const val SHORT_DATE_PATTERN = "M/d/yyyy"
 
 @Composable
 private fun TableCell(modifier: Modifier, text: String) {
@@ -28,11 +31,11 @@ private fun TableCell(modifier: Modifier, text: String) {
 }
 
 @Composable
-private fun TrendCell(modifier: Modifier, trend: Trend<Int>) {
+private fun GrowthCell(modifier: Modifier, growth: Growth<Int>) {
     Box(
         modifier = modifier, contentAlignment = Alignment.Center
     ) {
-        TrendItem(modifier = Modifier.fillMaxSize(), trend = trend)
+        GrowthItem(modifier = Modifier.fillMaxSize(), growth = growth)
     }
 }
 
@@ -66,6 +69,8 @@ fun ProjectRow(
     ) {
         val cellModifier = Modifier.weight(1f)
 
+        val growthTooltipModifier = Modifier.size(256.dp, 128.dp).padding(4.dp)
+
         CellTooltip(modifier = cellModifier, tooltip = {
             Text(text = project.name)
         }, content = {
@@ -76,20 +81,88 @@ fun ProjectRow(
 
         TableCell(modifier = cellModifier.padding(4.dp), text = "${project.forks}")
 
-        TrendCell(modifier = cellModifier.padding(4.dp), trend = project.clonesTrend)
+        CellTooltip(modifier = cellModifier, tooltip = {
+            val allValues = project.clonesGrowth.previousWeek + project.clonesGrowth.currentWeek
 
-        TrendCell(modifier = cellModifier.padding(4.dp), trend = project.clonersTrend)
+            val minValue = allValues.minOrNull() ?: 0
 
-        TrendCell(modifier = cellModifier.padding(4.dp), trend = project.viewsTrend)
+            val maxValue = allValues.maxOrNull() ?: 0
 
-        TrendCell(modifier = cellModifier.padding(4.dp), trend = project.visitorsTrend)
+            if ((project.clonesGrowth.previousWeek.size > 1 || project.clonesGrowth.previousWeek.size > 1) && maxValue > 0) {
+                GrowthChart(
+                    modifier = growthTooltipModifier,
+                    minValue = minValue,
+                    maxValue = maxValue,
+                    growth = project.clonesGrowth
+                )
+            }
+        }, content = {
+            GrowthCell(modifier = Modifier.fillMaxSize().padding(4.dp), growth = project.clonesGrowth)
+        })
+
+        CellTooltip(modifier = cellModifier, tooltip = {
+            val allValues = project.clonersGrowth.previousWeek + project.clonersGrowth.currentWeek
+
+            val minValue = allValues.minOrNull() ?: 0
+
+            val maxValue = allValues.maxOrNull() ?: 0
+
+            if ((project.clonersGrowth.previousWeek.size > 1 || project.clonersGrowth.previousWeek.size > 1) && maxValue > 0) {
+                GrowthChart(
+                    modifier = growthTooltipModifier,
+                    minValue = minValue,
+                    maxValue = maxValue,
+                    growth = project.clonersGrowth
+                )
+            }
+        }, content = {
+            GrowthCell(modifier = Modifier.fillMaxSize().padding(4.dp), growth = project.clonersGrowth)
+        })
+
+        CellTooltip(modifier = cellModifier, tooltip = {
+            val allValues = project.viewsGrowth.previousWeek + project.viewsGrowth.currentWeek
+
+            val minValue = allValues.minOrNull() ?: 0
+
+            val maxValue = allValues.maxOrNull() ?: 0
+
+            if ((project.viewsGrowth.previousWeek.size > 1 || project.viewsGrowth.previousWeek.size > 1) && maxValue > 0) {
+                GrowthChart(
+                    modifier = growthTooltipModifier,
+                    minValue = minValue,
+                    maxValue = maxValue,
+                    growth = project.viewsGrowth
+                )
+            }
+        }, content = {
+            GrowthCell(modifier = Modifier.fillMaxSize().padding(4.dp), growth = project.viewsGrowth)
+        })
+
+        CellTooltip(modifier = cellModifier, tooltip = {
+            val allValues = project.visitorsGrowth.previousWeek + project.visitorsGrowth.currentWeek
+
+            val minValue = allValues.minOrNull() ?: 0
+
+            val maxValue = allValues.maxOrNull() ?: 0
+
+            if ((project.visitorsGrowth.previousWeek.size > 1 || project.visitorsGrowth.previousWeek.size > 1) && maxValue > 0) {
+                GrowthChart(
+                    modifier = growthTooltipModifier,
+                    minValue = minValue,
+                    maxValue = maxValue,
+                    growth = project.visitorsGrowth
+                )
+            }
+        }, content = {
+            GrowthCell(modifier = Modifier.fillMaxSize().padding(4.dp), growth = project.visitorsGrowth)
+        })
 
         CellTooltip(modifier = cellModifier, tooltip = {
             Text(SimpleDateFormat.getDateTimeInstance().format(Date(project.createdAt.inWholeMilliseconds)))
         }, content = {
             TableCell(
                 modifier = Modifier.fillMaxSize().padding(4.dp),
-                text = SimpleDateFormat("MMM dd").format(Date(project.createdAt.inWholeMilliseconds))
+                text = SimpleDateFormat(SHORT_DATE_PATTERN).format(Date(project.createdAt.inWholeMilliseconds))
             )
         })
 
@@ -98,7 +171,7 @@ fun ProjectRow(
         }, content = {
             TableCell(
                 modifier = Modifier.fillMaxSize().padding(4.dp),
-                text = SimpleDateFormat("MMM dd").format(Date(project.pushedAt.inWholeMilliseconds))
+                text = SimpleDateFormat(SHORT_DATE_PATTERN).format(Date(project.pushedAt.inWholeMilliseconds))
             )
         })
     }

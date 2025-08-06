@@ -1,6 +1,6 @@
 package io.github.numq.starsnomore.project
 
-import io.github.numq.starsnomore.trend.Trend
+import io.github.numq.starsnomore.growth.Growth
 import kotlin.time.Duration
 
 data class Project(
@@ -11,10 +11,10 @@ data class Project(
     val url: String,
     val stargazers: Int,
     val forks: Int,
-    val clonesTrend: Trend<Int>,
-    val clonersTrend: Trend<Int>,
-    val viewsTrend: Trend<Int>,
-    val visitorsTrend: Trend<Int>,
+    val clonesGrowth: Growth<Int>,
+    val clonersGrowth: Growth<Int>,
+    val viewsGrowth: Growth<Int>,
+    val visitorsGrowth: Growth<Int>,
     val createdAt: Duration,
     val pushedAt: Duration,
 )

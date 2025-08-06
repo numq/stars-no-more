@@ -56,7 +56,7 @@ internal class GitHubProjectService(
             githubHeaders()
         }.let { response ->
             when {
-                response.status.isSuccess() -> response.body<GitHubClones>().also(::println)
+                response.status.isSuccess() -> response.body<GitHubClones>()
 
                 else -> throw Exception("Failed to fetch clones: ${response.status} - ${response.bodyAsText()}")
             }

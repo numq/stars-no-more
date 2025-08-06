@@ -1,6 +1,6 @@
 package io.github.numq.starsnomore.project
 
-import io.github.numq.starsnomore.trend.Trend
+import io.github.numq.starsnomore.growth.Growth
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import java.time.Instant
@@ -12,23 +12,37 @@ internal class GitHubProjectRepository(private val projectService: ProjectServic
         const val WEEKLY_HISTORY = 7
     }
 
-    private fun calculateTrend(metrics: List<Int>): Trend<Int> {
-        val current = metrics.take(WEEKLY_HISTORY).sum()
+    private fun calculateGrowth(metrics: List<Int>): Growth<Int> {
+        val previousWeek = metrics.drop(WEEKLY_HISTORY).take(WEEKLY_HISTORY)
 
-        val previous = metrics.drop(WEEKLY_HISTORY).take(WEEKLY_HISTORY).sum()
+        val currentWeek = metrics.take(WEEKLY_HISTORY)
+
+        val previous = previousWeek.sum()
+
+        val current = currentWeek.sum()
 
         return when {
-            previous == 0 -> Trend.Neutral(current)
+            previous == 0 -> Growth.Neutral(value = current, previousWeek = previousWeek, currentWeek = currentWeek)
 
             else -> {
                 val change = (current - previous).toFloat() / previous
 
                 when {
-                    change > 0 -> Trend.Positive(current, change)
+                    change > 0 -> Growth.Positive(
+                        value = current,
+                        percentage = change,
+                        previousWeek = previousWeek,
+                        currentWeek = currentWeek
+                    )
 
-                    change < 0 -> Trend.Negative(current, change)
+                    change < 0 -> Growth.Negative(
+                        value = current,
+                        percentage = change,
+                        previousWeek = previousWeek,
+                        currentWeek = currentWeek
+                    )
 
-                    else -> Trend.Neutral(current)
+                    else -> Growth.Neutral(value = current, previousWeek = previousWeek, currentWeek = currentWeek)
                 }
             }
         }
@@ -61,10 +75,10 @@ internal class GitHubProjectRepository(private val projectService: ProjectServic
                     url = url,
                     stargazers = stargazers,
                     forks = forks,
-                    clonesTrend = calculateTrend(clones),
-                    clonersTrend = calculateTrend(cloners),
-                    viewsTrend = calculateTrend(views),
-                    visitorsTrend = calculateTrend(visitors),
+                    clonesGrowth = calculateGrowth(clones),
+                    clonersGrowth = calculateGrowth(cloners),
+                    viewsGrowth = calculateGrowth(views),
+                    visitorsGrowth = calculateGrowth(visitors),
                     createdAt = Instant.parse(createdAt).toEpochMilli().milliseconds,
                     pushedAt = Instant.parse(pushedAt).toEpochMilli().milliseconds
                 )

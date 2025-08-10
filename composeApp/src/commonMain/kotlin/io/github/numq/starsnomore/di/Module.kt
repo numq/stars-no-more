@@ -1,5 +1,6 @@
 package io.github.numq.starsnomore.di
 
+import io.github.numq.starsnomore.credentials.CredentialsManager
 import io.github.numq.starsnomore.dashboard.DashboardFeature
 import io.github.numq.starsnomore.dashboard.DashboardReducer
 import io.github.numq.starsnomore.navigation.NavigationFeature
@@ -9,25 +10,28 @@ import io.ktor.client.HttpClient
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import org.koin.dsl.onClose
-import java.io.File
 
 private val application = module {
     single {
+        Json {
+            prettyPrint = true
+            ignoreUnknownKeys = true
+            isLenient = true
+        }
+    }
+
+    single {
         HttpClient {
             install(ContentNegotiation) {
-                json(Json {
-                    prettyPrint = true
-                    ignoreUnknownKeys = true
-                    isLenient = true
-                })
+                json(get())
             }
         }
     } bind HttpClient::class onClose { it?.close() }
+
+    single { CredentialsManager.Default(get()) } bind CredentialsManager::class
 }
 
 private val navigation = module {
@@ -36,22 +40,7 @@ private val navigation = module {
 }
 
 private val project = module {
-    single {
-        // todo
-
-        val credentials = File("${File(System.getProperty("user.dir")).parent}/credentials.json")
-
-        require(credentials.exists()) { "Not found credentials.json" }
-
-        val (username, token) = with(Json.parseToJsonElement(credentials.readText()).jsonObject) {
-            Pair(
-                get("username")?.jsonPrimitive?.content ?: "",
-                get("token")?.jsonPrimitive?.content ?: "",
-            )
-        }
-
-        GitHubProjectService(get(), username, token)
-    } bind ProjectService::class
+    single { GitHubProjectService(get(), get(), get()) } bind ProjectService::class
     single { GitHubProjectRepository(get()) } bind ProjectRepository::class
     single { GetProjects(get()) }
 }

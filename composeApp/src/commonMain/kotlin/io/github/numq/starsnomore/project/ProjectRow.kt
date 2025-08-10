@@ -41,10 +41,15 @@ private fun GrowthCell(modifier: Modifier, growth: Growth<Int>) {
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun CellTooltip(modifier: Modifier, tooltip: (@Composable () -> Unit)?, content: @Composable () -> Unit) {
+private fun CellTooltip(
+    modifier: Modifier,
+    isVisible: Boolean,
+    tooltip: (@Composable () -> Unit)?,
+    content: @Composable () -> Unit,
+) {
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
         TooltipArea(tooltip = {
-            if (tooltip != null) {
+            if (tooltip != null && isVisible) {
                 Card {
                     Box(modifier = Modifier.padding(4.dp), contentAlignment = Alignment.Center) {
                         tooltip()
@@ -61,6 +66,7 @@ private fun CellTooltip(modifier: Modifier, tooltip: (@Composable () -> Unit)?, 
 fun ProjectRow(
     modifier: Modifier,
     project: Project,
+    isTooltipVisible: Boolean = true,
 ) {
     Row(
         modifier = modifier.height(IntrinsicSize.Max),
@@ -71,7 +77,7 @@ fun ProjectRow(
 
         val growthTooltipModifier = Modifier.size(256.dp, 128.dp).padding(4.dp)
 
-        CellTooltip(modifier = cellModifier, tooltip = {
+        CellTooltip(modifier = cellModifier, isVisible = isTooltipVisible, tooltip = {
             Text(text = project.name)
         }, content = {
             TableCell(modifier = Modifier.fillMaxSize().padding(4.dp), text = project.name)
@@ -81,7 +87,7 @@ fun ProjectRow(
 
         TableCell(modifier = cellModifier.padding(4.dp), text = "${project.forks}")
 
-        CellTooltip(modifier = cellModifier, tooltip = {
+        CellTooltip(modifier = cellModifier, isVisible = isTooltipVisible, tooltip = {
             val allValues = project.clonesGrowth.previousWeek + project.clonesGrowth.currentWeek
 
             val minValue = allValues.minOrNull() ?: 0
@@ -100,7 +106,7 @@ fun ProjectRow(
             GrowthCell(modifier = Modifier.fillMaxSize().padding(4.dp), growth = project.clonesGrowth)
         })
 
-        CellTooltip(modifier = cellModifier, tooltip = {
+        CellTooltip(modifier = cellModifier, isVisible = isTooltipVisible, tooltip = {
             val allValues = project.clonersGrowth.previousWeek + project.clonersGrowth.currentWeek
 
             val minValue = allValues.minOrNull() ?: 0
@@ -119,7 +125,7 @@ fun ProjectRow(
             GrowthCell(modifier = Modifier.fillMaxSize().padding(4.dp), growth = project.clonersGrowth)
         })
 
-        CellTooltip(modifier = cellModifier, tooltip = {
+        CellTooltip(modifier = cellModifier, isVisible = isTooltipVisible, tooltip = {
             val allValues = project.viewsGrowth.previousWeek + project.viewsGrowth.currentWeek
 
             val minValue = allValues.minOrNull() ?: 0
@@ -138,7 +144,7 @@ fun ProjectRow(
             GrowthCell(modifier = Modifier.fillMaxSize().padding(4.dp), growth = project.viewsGrowth)
         })
 
-        CellTooltip(modifier = cellModifier, tooltip = {
+        CellTooltip(modifier = cellModifier, isVisible = isTooltipVisible, tooltip = {
             val allValues = project.visitorsGrowth.previousWeek + project.visitorsGrowth.currentWeek
 
             val minValue = allValues.minOrNull() ?: 0
@@ -157,7 +163,7 @@ fun ProjectRow(
             GrowthCell(modifier = Modifier.fillMaxSize().padding(4.dp), growth = project.visitorsGrowth)
         })
 
-        CellTooltip(modifier = cellModifier, tooltip = {
+        CellTooltip(modifier = cellModifier, isVisible = isTooltipVisible, tooltip = {
             Text(SimpleDateFormat.getDateTimeInstance().format(Date(project.createdAt.inWholeMilliseconds)))
         }, content = {
             TableCell(
@@ -166,7 +172,7 @@ fun ProjectRow(
             )
         })
 
-        CellTooltip(modifier = cellModifier, tooltip = {
+        CellTooltip(modifier = cellModifier, isVisible = isTooltipVisible, tooltip = {
             Text(SimpleDateFormat.getDateTimeInstance().format(Date(project.pushedAt.inWholeMilliseconds)))
         }, content = {
             TableCell(

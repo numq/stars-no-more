@@ -8,7 +8,6 @@ import kotlin.time.Duration.Companion.milliseconds
 
 internal class GitHubProjectRepository(private val projectService: ProjectService) : ProjectRepository {
     private companion object {
-        const val FIRST_PAGE = 1
         const val WEEKLY_HISTORY = 7
     }
 
@@ -29,17 +28,11 @@ internal class GitHubProjectRepository(private val projectService: ProjectServic
 
                 when {
                     change > 0 -> Growth.Positive(
-                        value = current,
-                        percentage = change,
-                        previousWeek = previousWeek,
-                        currentWeek = currentWeek
+                        value = current, percentage = change, previousWeek = previousWeek, currentWeek = currentWeek
                     )
 
                     change < 0 -> Growth.Negative(
-                        value = current,
-                        percentage = change,
-                        previousWeek = previousWeek,
-                        currentWeek = currentWeek
+                        value = current, percentage = change, previousWeek = previousWeek, currentWeek = currentWeek
                     )
 
                     else -> Growth.Neutral(value = current, previousWeek = previousWeek, currentWeek = currentWeek)
@@ -48,10 +41,13 @@ internal class GitHubProjectRepository(private val projectService: ProjectServic
         }
     }
 
-    override suspend fun getProjects() = projectService.getProjects(FIRST_PAGE).mapCatching { repos ->
-        repos.map { repo ->
+    override suspend fun getProjects() = projectService.getProjects().mapCatching { gitHubProjects ->
+        gitHubProjects.map { gitHubProject ->
             val (cloneTrafficRes, viewTrafficRes) = coroutineScope {
-                async { projectService.getCloneTraffic(repo) }.await() to async { projectService.getViewTraffic(repo) }.await()
+                Pair(
+                    async { projectService.getCloneTraffic(gitHubProject) }.await(),
+                    async { projectService.getViewTraffic(gitHubProject) }.await()
+                )
             }
 
             val cloneTraffic = cloneTrafficRes.getOrThrow()
@@ -66,7 +62,7 @@ internal class GitHubProjectRepository(private val projectService: ProjectServic
 
             val visitors = viewTraffic.views.map(GitHubDailyTraffic::uniques)
 
-            with(repo) {
+            with(gitHubProject) {
                 Project(
                     id = id,
                     name = name,

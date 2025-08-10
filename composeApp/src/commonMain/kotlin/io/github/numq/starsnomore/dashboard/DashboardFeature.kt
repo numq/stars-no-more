@@ -4,7 +4,7 @@ import io.github.numq.starsnomore.feature.Feature
 import kotlinx.coroutines.*
 
 class DashboardFeature(reducer: DashboardReducer) : Feature<DashboardCommand, DashboardState, DashboardEvent>(
-    initialState = DashboardState(),
+    initialState = DashboardState.Loading(),
     coroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
     reducer = reducer
 ) {

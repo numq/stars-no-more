@@ -1,79 +1,58 @@
 package io.github.numq.starsnomore.sorting
 
-sealed interface SortingCriteria {
-    val name: String
+sealed class SortingCriteria private constructor(open val type: SortingType, open val direction: SortingDirection) {
+    data class Name(override val direction: SortingDirection) : SortingCriteria(
+        type = SortingType.NAME,
+        direction = direction
+    )
 
-    val tooltip: String?
+    data class Stargazers(override val direction: SortingDirection) : SortingCriteria(
+        type = SortingType.STARGAZERS,
+        direction = direction
+    )
 
-    data object Name : SortingCriteria {
-        override val name = "Name"
+    data class Forks(override val direction: SortingDirection) : SortingCriteria(
+        type = SortingType.FORKS,
+        direction = direction
+    )
 
-        override val tooltip = null
+    sealed class Traffic private constructor(
+        override val type: SortingType,
+        override val direction: SortingDirection,
+    ) : SortingCriteria(type = type, direction = direction) {
+        data class Clones(override val direction: SortingDirection) : Traffic(
+            type = SortingType.CLONES,
+            direction = direction
+        )
+
+        data class Cloners(override val direction: SortingDirection) : Traffic(
+            type = SortingType.CLONERS,
+            direction = direction
+        )
+
+        data class Views(override val direction: SortingDirection) : Traffic(
+            type = SortingType.VIEWS,
+            direction = direction
+        )
+
+        data class Visitors(override val direction: SortingDirection) : Traffic(
+            type = SortingType.VISITORS,
+            direction = direction
+        )
     }
 
-    data object Stargazers : SortingCriteria {
-        override val name = "Stargazers"
+    sealed class Date private constructor(
+        override val type: SortingType,
+        override val direction: SortingDirection,
+    ) : SortingCriteria(type = type, direction = direction) {
+        data class CreatedAt(override val direction: SortingDirection) : Date(
+            type = SortingType.CREATED_AT,
+            direction = direction
+        )
 
-        override val tooltip = "For all time"
-    }
-
-    data object Forks : SortingCriteria {
-        override val name = "Forks"
-
-        override val tooltip = "For all time"
-    }
-
-    sealed interface Traffic : SortingCriteria {
-        data object Clones : Traffic {
-            override val name = "Clones"
-
-            override val tooltip = "Over the past two weeks"
-        }
-
-        data object Cloners : Traffic {
-            override val name = "Cloners"
-
-            override val tooltip = "Over the past two weeks"
-        }
-
-        data object Views : Traffic {
-            override val name = "Views"
-
-            override val tooltip = "Over the past two weeks"
-        }
-
-        data object Visitors : Traffic {
-            override val name = "Visitors"
-
-            override val tooltip = "Over the past two weeks"
-        }
-    }
-
-    sealed interface Date : SortingCriteria {
-        data object CreatedAt : Date {
-            override val name = "Created at"
-
-            override val tooltip = null
-        }
-
-        data object PushedAt : Date {
-            override val name = "Pushed at"
-
-            override val tooltip = null
-        }
-    }
-
-    companion object {
-        val values = listOf(
-            Name,
-            Stargazers,
-            Forks,
-            Traffic.Clones,
-            Traffic.Cloners,
-            Traffic.Views,
-            Traffic.Visitors,
-            Date.CreatedAt,
-            Date.PushedAt
+        data class PushedAt(override val direction: SortingDirection) : Date(
+            type = SortingType.PUSHED_AT,
+            direction = direction
         )
     }
 }

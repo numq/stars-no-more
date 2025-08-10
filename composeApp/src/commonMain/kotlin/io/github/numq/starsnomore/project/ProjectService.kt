@@ -1,7 +1,7 @@
 package io.github.numq.starsnomore.project
 
 interface ProjectService {
-    suspend fun getProjects(page: Int): Result<List<GitHubProject>>
+    suspend fun getProjects(): Result<List<GitHubProject>>
 
     suspend fun getCloneTraffic(githubProject: GitHubProject): Result<GitHubClones>
 

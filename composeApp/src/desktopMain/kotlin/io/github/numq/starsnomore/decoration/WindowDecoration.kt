@@ -41,6 +41,7 @@ fun ApplicationScope.WindowDecoration(
     initialWindowSize: DpSize? = null,
     minimumWindowSize: DpSize? = null,
     isVisible: Boolean = true,
+    isTransparent: Boolean = true,
     isResizable: Boolean = true,
     isEnabled: Boolean = true,
     isFocusable: Boolean = true,
@@ -91,7 +92,7 @@ fun ApplicationScope.WindowDecoration(
         state = windowState,
         visible = isVisible,
         undecorated = true,
-        transparent = true,
+        transparent = isTransparent,
         resizable = isResizable,
         enabled = isEnabled,
         focusable = isFocusable,
@@ -197,7 +198,7 @@ fun ApplicationScope.WindowDecoration(
         }
 
         BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-            val contentHeight = remember(maxHeight, windowDecorationHeight) { (maxHeight - windowDecorationHeight) }
+            val contentHeight = remember(maxHeight, windowDecorationHeight) { maxHeight - windowDecorationHeight }
 
             Column(modifier = Modifier.fillMaxSize()) {
                 Row(
@@ -268,7 +269,9 @@ fun ApplicationScope.WindowDecoration(
                                     }
                                 }, contentAlignment = Alignment.Center
                             ) {
-                                Icon(Icons.Default.Minimize, null, tint = tint)
+                                Icon(
+                                    Icons.Default.Minimize, null, tint = tint
+                                )
                             }
                         }
 

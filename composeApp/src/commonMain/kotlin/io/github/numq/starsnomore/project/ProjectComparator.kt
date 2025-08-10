@@ -1,34 +1,35 @@
 package io.github.numq.starsnomore.project
 
 import io.github.numq.starsnomore.sorting.SortingCriteria
+import io.github.numq.starsnomore.sorting.SortingDirection
 
 object ProjectComparator {
     private inline fun <T : Comparable<T>> compareByDirection(
-        isAscending: Boolean,
+        direction: SortingDirection,
         crossinline selector: (Project) -> T,
-    ) = when {
-        isAscending -> compareBy(selector)
+    ) = when (direction) {
+        SortingDirection.ASCENDING -> compareBy(selector)
 
-        else -> compareByDescending(selector)
+        SortingDirection.DESCENDING -> compareByDescending(selector)
     }
 
-    fun create(criteria: SortingCriteria, isAscending: Boolean) = when (criteria) {
-        SortingCriteria.Name -> compareByDirection(isAscending, Project::name)
+    fun create(criteria: SortingCriteria) = when (criteria) {
+        is SortingCriteria.Name -> compareByDirection(criteria.direction, Project::name)
 
-        SortingCriteria.Stargazers -> compareByDirection(isAscending, Project::stargazers)
+        is SortingCriteria.Stargazers -> compareByDirection(criteria.direction, Project::stargazers)
 
-        SortingCriteria.Forks -> compareByDirection(isAscending, Project::forks)
+        is SortingCriteria.Forks -> compareByDirection(criteria.direction, Project::forks)
 
-        SortingCriteria.Traffic.Clones -> compareByDirection(isAscending) { it.clonesGrowth.value }
+        is SortingCriteria.Traffic.Clones -> compareByDirection(criteria.direction) { it.clonesGrowth.value }
 
-        SortingCriteria.Traffic.Cloners -> compareByDirection(isAscending) { it.clonersGrowth.value }
+        is SortingCriteria.Traffic.Cloners -> compareByDirection(criteria.direction) { it.clonersGrowth.value }
 
-        SortingCriteria.Traffic.Views -> compareByDirection(isAscending) { it.viewsGrowth.value }
+        is SortingCriteria.Traffic.Views -> compareByDirection(criteria.direction) { it.viewsGrowth.value }
 
-        SortingCriteria.Traffic.Visitors -> compareByDirection(isAscending) { it.visitorsGrowth.value }
+        is SortingCriteria.Traffic.Visitors -> compareByDirection(criteria.direction) { it.visitorsGrowth.value }
 
-        SortingCriteria.Date.CreatedAt -> compareByDirection(isAscending) { it.createdAt.inWholeMilliseconds }
+        is SortingCriteria.Date.CreatedAt -> compareByDirection(criteria.direction) { it.createdAt.inWholeMilliseconds }
 
-        SortingCriteria.Date.PushedAt -> compareByDirection(isAscending) { it.pushedAt.inWholeMilliseconds }
+        is SortingCriteria.Date.PushedAt -> compareByDirection(criteria.direction) { it.pushedAt.inWholeMilliseconds }
     }
 }

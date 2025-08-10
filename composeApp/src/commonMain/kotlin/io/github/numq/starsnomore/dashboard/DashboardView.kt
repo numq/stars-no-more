@@ -17,7 +17,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.numq.starsnomore.project.Project
 import io.github.numq.starsnomore.project.ProjectRow
-import io.github.numq.starsnomore.sorting.SortingCriteria
+import io.github.numq.starsnomore.project.ProjectServiceException
+import io.github.numq.starsnomore.sorting.SortingDirection
+import io.github.numq.starsnomore.sorting.SortingType
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
@@ -26,108 +28,156 @@ import org.koin.compose.koinInject
 fun DashboardView(feature: DashboardFeature = koinInject()) {
     val coroutineScope = rememberCoroutineScope()
 
-    val state by feature.state.collectAsState()
-
-    val listState = rememberLazyListState()
-
-    var isContextMenuVisible by remember { mutableStateOf(false) }
-
-    LaunchedEffect(state.selectedSortingCriteria, state.isAscending) {
-        listState.scrollToItem(0)
-    }
+    val currentState by feature.state.collectAsState()
 
     Scaffold(
-        modifier = Modifier.fillMaxSize()
-            .onClick(matcher = PointerMatcher.mouse(PointerButton.Secondary), onClick = {
-                isContextMenuVisible = true
-            }), floatingActionButtonPosition = FabPosition.Center
+        modifier = Modifier.fillMaxSize().onClick(
+            matcher = PointerMatcher.mouse(PointerButton.Secondary), onClick = {
+                coroutineScope.launch {
+                    feature.execute(DashboardCommand.OpenContextMenu)
+                }
+            })
     ) { paddingValues ->
-        Column(
-            modifier = Modifier.fillMaxSize().padding(paddingValues),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(space = 8.dp, alignment = Alignment.CenterVertically)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                SortingCriteria.values.forEach { criteria ->
-                    TooltipArea(
-                        tooltip = {
-                            criteria.tooltip?.let { tooltip ->
-                                Card {
-                                    Box(modifier = Modifier.padding(4.dp), contentAlignment = Alignment.Center) {
-                                        Text(text = tooltip)
+        ContextMenuArea(items = {
+            listOf(
+                ContextMenuItem("Refresh", onClick = {
+                    coroutineScope.launch {
+                        feature.execute(DashboardCommand.RefreshProjects)
+                    }
+                })
+            )
+        }) {
+            when (val state = currentState) {
+                is DashboardState.Loading -> Box(
+                    modifier = Modifier.fillMaxSize().padding(paddingValues), contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+
+                is DashboardState.Interactable.Loaded -> when {
+                    state.projects.isEmpty() -> Box(
+                        modifier = Modifier.fillMaxSize().padding(paddingValues), contentAlignment = Alignment.Center
+                    ) {
+                        Text("The user does not own any repository")
+                    }
+
+                    else -> {
+                        val listState = rememberLazyListState()
+
+                        LaunchedEffect(state.selectedSortingCriteria) {
+                            listState.animateScrollToItem(0)
+                        }
+
+                        Column(
+                            modifier = Modifier.fillMaxSize().padding(paddingValues),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(
+                                space = 8.dp, alignment = Alignment.CenterVertically
+                            )
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                SortingType.entries.forEach { type ->
+                                    TooltipArea(
+                                        tooltip = {
+                                        type.description?.let { tooltip ->
+                                            Card {
+                                                Box(
+                                                    modifier = Modifier.padding(4.dp),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Text(text = tooltip)
+                                                }
+                                            }
+                                        }
+                                    }, modifier = Modifier.weight(1f).height(IntrinsicSize.Max).clickable {
+                                        coroutineScope.launch {
+                                            feature.execute(DashboardCommand.SortProjects(type = type))
+                                        }
+                                    }.padding(vertical = 8.dp, horizontal = 4.dp)
+                                    ) {
+                                        Box(
+                                            modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
+                                        ) {
+                                            Column(
+                                                horizontalAlignment = Alignment.CenterHorizontally,
+                                                verticalArrangement = Arrangement.Center
+                                            ) {
+                                                Text(
+                                                    text = type.displayName,
+                                                    textAlign = TextAlign.Center,
+                                                    modifier = Modifier.padding(bottom = 2.dp),
+                                                    style = if (type == state.selectedSortingCriteria.type) {
+                                                        MaterialTheme.typography.labelLarge.copy(
+                                                            color = MaterialTheme.colorScheme.primary
+                                                        )
+                                                    } else {
+                                                        MaterialTheme.typography.labelLarge
+                                                    }
+                                                )
+
+                                                if (type == state.selectedSortingCriteria.type) {
+                                                    Icon(
+                                                        imageVector = Icons.AutoMirrored.Filled.Sort,
+                                                        contentDescription = null,
+                                                        modifier = Modifier.size(16.dp)
+                                                            .rotate(if (state.selectedSortingCriteria.direction == SortingDirection.ASCENDING) 180f else 0f),
+                                                        tint = MaterialTheme.colorScheme.primary
+                                                    )
+                                                } else {
+                                                    Spacer(modifier = Modifier.size(16.dp))
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
-                        },
-                        modifier = Modifier.weight(1f).height(IntrinsicSize.Max)
-                            .clickable(enabled = !state.isLoadingProjects) {
-                                coroutineScope.launch {
-                                    feature.execute(DashboardCommand.SortProjects(criteria = criteria))
+                            when {
+                                state.projects.isEmpty() -> Box(
+                                    modifier = Modifier.weight(1f), contentAlignment = Alignment.Center
+                                ) {
+                                    Text("The user does not own any repository")
                                 }
-                            }.padding(vertical = 8.dp, horizontal = 4.dp)
-                    ) {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center
-                            ) {
-                                Text(
-                                    text = criteria.name,
-                                    textAlign = TextAlign.Center,
-                                    modifier = Modifier.padding(bottom = 2.dp),
-                                    style = if (criteria == state.selectedSortingCriteria) {
-                                        MaterialTheme.typography.labelLarge.copy(
-                                            color = MaterialTheme.colorScheme.primary
-                                        )
-                                    } else {
-                                        MaterialTheme.typography.labelLarge
-                                    }
-                                )
 
-                                if (criteria == state.selectedSortingCriteria) {
-                                    Icon(
-                                        imageVector = Icons.AutoMirrored.Filled.Sort,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(16.dp).rotate(if (state.isAscending) 180f else 0f),
-                                        tint = MaterialTheme.colorScheme.primary
+                                else -> LazyColumn(
+                                    modifier = Modifier.weight(1f),
+                                    state = listState,
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(
+                                        space = 8.dp, alignment = Alignment.Top
                                     )
-                                } else {
-                                    Spacer(modifier = Modifier.size(16.dp))
+                                ) {
+                                    items(state.sortedProjects, key = Project::id) { project ->
+                                        ProjectRow(modifier = Modifier.fillMaxWidth(), project = project)
+                                    }
                                 }
                             }
                         }
                     }
                 }
-            }
-            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                when {
-                    state.isLoadingProjects -> CircularProgressIndicator()
 
-                    state.projects.isEmpty() -> Text("No repositories found")
-
-                    else -> ContextMenuArea(items = {
-                        listOf(
-                            ContextMenuItem("Refresh data", onClick = {
-                                coroutineScope.launch {
-                                    feature.execute(DashboardCommand.UpdateLoadingState(isLoadingProjects = true))
-
-                                    feature.execute(DashboardCommand.GetProjects)
-                                }
-                            })
+                is DashboardState.Interactable.Error -> Box(
+                    modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(.5f),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(
+                            space = 8.dp, alignment = Alignment.CenterVertically
                         )
-                    }) {
-                        LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            state = listState,
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(space = 8.dp, alignment = Alignment.Top)
-                        ) {
-                            items(state.projects, key = Project::id) { project ->
-                                ProjectRow(modifier = Modifier.fillMaxWidth(), project = project)
+                    ) {
+                        Text("An error occurred", style = MaterialTheme.typography.labelLarge)
+
+                        Text(state.exception.message ?: "Unknown error", style = MaterialTheme.typography.bodyMedium)
+
+                        if (state.exception is ProjectServiceException) {
+                            Text("Status: ${state.exception.status}", style = MaterialTheme.typography.bodySmall)
+
+                            if (state.exception.body != null) {
+                                Text(state.exception.body, style = MaterialTheme.typography.bodySmall)
                             }
                         }
                     }

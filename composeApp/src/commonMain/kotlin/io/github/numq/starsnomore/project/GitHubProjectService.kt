@@ -1,5 +1,7 @@
 package io.github.numq.starsnomore.project
 
+import io.github.numq.starsnomore.credentials.Credentials
+import io.github.numq.starsnomore.credentials.CredentialsException
 import io.github.numq.starsnomore.credentials.CredentialsManager
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -28,6 +30,16 @@ internal class GitHubProjectService(
         const val DIRECTION = "desc"
     }
 
+    private fun requireCredentials(credentials: Credentials) = with(credentials) {
+        when {
+            credentials.name.isBlank() -> throw CredentialsException("Bad credentials: Name should not be empty")
+
+            credentials.token.isBlank() -> throw CredentialsException("Bad credentials: Token should not be empty")
+        }
+
+        this
+    }
+
     private fun HttpRequestBuilder.githubHeaders(token: String) {
         header("Accept", "application/vnd.github+json")
         header("X-GitHub-Api-Version", "2022-11-28")
@@ -38,11 +50,7 @@ internal class GitHubProjectService(
 
     override suspend fun getProjects() = runCatching {
         withContext(Dispatchers.IO) {
-            val (name, token) = credentialsManager.credentials.value
-
-            require(name.isNotBlank()) { "Bad credentials: Name should not be empty" }
-
-            require(token.isNotBlank()) { "Bad credentials: Token should not be empty" }
+            val (name, token) = requireCredentials(credentialsManager.credentials.value)
 
             val url =
                 "$BASE_URL/users/$name/repos?type=$TYPE&per_page=$PER_PAGE&page=$PAGE&sort=$SORT&direction=$DIRECTION"
@@ -66,9 +74,7 @@ internal class GitHubProjectService(
 
     override suspend fun getCloneTraffic(githubProject: GitHubProject) = runCatching {
         withContext(Dispatchers.IO) {
-            val token = credentialsManager.credentials.value.token
-
-            require(token.isNotBlank()) { "Bad credentials: Token should not be empty" }
+            val token = requireCredentials(credentialsManager.credentials.value).token
 
             val url = "$BASE_URL/repos/${githubProject.fullName}/$ENDPOINT_CLONES"
 
@@ -90,7 +96,7 @@ internal class GitHubProjectService(
 
     override suspend fun getViewTraffic(githubProject: GitHubProject) = runCatching {
         withContext(Dispatchers.IO) {
-            val token = credentialsManager.credentials.value.token
+            val token = requireCredentials(credentialsManager.credentials.value).token
 
             require(token.isNotBlank()) { "Bad credentials: Token should not be empty" }
 

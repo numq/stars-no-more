@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Sort
+import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -15,6 +16,8 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.input.pointer.PointerButton
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import io.github.numq.starsnomore.credentials.CredentialsException
+import io.github.numq.starsnomore.credentials.CredentialsInputDialog
 import io.github.numq.starsnomore.project.Project
 import io.github.numq.starsnomore.project.ProjectRow
 import io.github.numq.starsnomore.project.ProjectServiceException
@@ -34,7 +37,7 @@ fun DashboardView(feature: DashboardFeature = koinInject()) {
         modifier = Modifier.fillMaxSize().onClick(
             matcher = PointerMatcher.mouse(PointerButton.Secondary), onClick = {
                 coroutineScope.launch {
-                    feature.execute(DashboardCommand.OpenContextMenu)
+                    feature.execute(DashboardCommand.ContextMenu.OpenContextMenu)
                 }
             })
     ) { paddingValues ->
@@ -42,9 +45,9 @@ fun DashboardView(feature: DashboardFeature = koinInject()) {
             listOf(
                 ContextMenuItem("Refresh", onClick = {
                     coroutineScope.launch {
-                        feature.execute(DashboardCommand.StartLoading)
+                        feature.execute(DashboardCommand.Projects.StartLoading)
 
-                        feature.execute(DashboardCommand.RefreshProjects)
+                        feature.execute(DashboardCommand.Projects.RefreshProjects)
                     }
                 })
             )
@@ -85,21 +88,21 @@ fun DashboardView(feature: DashboardFeature = koinInject()) {
                                 SortingType.entries.forEach { type ->
                                     TooltipArea(
                                         tooltip = {
-                                        type.description?.let { tooltip ->
-                                            Card {
-                                                Box(
-                                                    modifier = Modifier.padding(4.dp),
-                                                    contentAlignment = Alignment.Center
-                                                ) {
-                                                    Text(text = tooltip)
+                                            type.description?.let { tooltip ->
+                                                Card {
+                                                    Box(
+                                                        modifier = Modifier.padding(4.dp),
+                                                        contentAlignment = Alignment.Center
+                                                    ) {
+                                                        Text(text = tooltip)
+                                                    }
                                                 }
                                             }
-                                        }
-                                    }, modifier = Modifier.weight(1f).height(IntrinsicSize.Max).clickable {
-                                        coroutineScope.launch {
-                                            feature.execute(DashboardCommand.SortProjects(type = type))
-                                        }
-                                    }.padding(vertical = 8.dp, horizontal = 4.dp)
+                                        }, modifier = Modifier.weight(1f).height(IntrinsicSize.Max).clickable {
+                                            coroutineScope.launch {
+                                                feature.execute(DashboardCommand.Projects.SortProjects(type = type))
+                                            }
+                                        }.padding(vertical = 8.dp, horizontal = 4.dp)
                                     ) {
                                         Box(
                                             modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
@@ -175,16 +178,43 @@ fun DashboardView(feature: DashboardFeature = koinInject()) {
 
                         Text(state.exception.message ?: "Unknown error", style = MaterialTheme.typography.bodyMedium)
 
-                        if (state.exception is ProjectServiceException) {
-                            Text("Status: ${state.exception.status}", style = MaterialTheme.typography.bodySmall)
+                        when (state.exception) {
+                            is CredentialsException -> Icon(
+                                Icons.Default.AccountBox, null, tint = MaterialTheme.colorScheme.primary
+                            )
 
-                            if (state.exception.body != null) {
-                                Text(state.exception.body, style = MaterialTheme.typography.bodySmall)
+                            is ProjectServiceException -> {
+                                Text("Status: ${state.exception.status}", style = MaterialTheme.typography.bodySmall)
+
+                                if (state.exception.body != null) {
+                                    Text(state.exception.body, style = MaterialTheme.typography.bodySmall)
+                                }
                             }
                         }
                     }
                 }
             }
         }
+    }
+
+    if (currentState.isCredentialsDialogVisible) {
+        CredentialsInputDialog(
+            credentials = currentState.credentials,
+            isTokenVisible = currentState.isCredentialsTokenVisible,
+            toggleTokenVisibility = {
+                coroutineScope.launch {
+                    feature.execute(DashboardCommand.CredentialsDialog.ToggleTokenVisibility)
+                }
+            },
+            onDismissRequest = {
+                coroutineScope.launch {
+                    feature.execute(DashboardCommand.CredentialsDialog.CloseCredentialsDialog)
+                }
+            },
+            onCredentialsSubmit = { credentials ->
+                coroutineScope.launch {
+                    feature.execute(DashboardCommand.CredentialsDialog.UpdateCredentialsDialog(credentials = credentials))
+                }
+            })
     }
 }

@@ -1,5 +1,6 @@
 package io.github.numq.starsnomore.dashboard
 
+import io.github.numq.starsnomore.credentials.CredentialsDialogControls
 import io.github.numq.starsnomore.feature.Feature
 import kotlinx.coroutines.*
 
@@ -12,7 +13,13 @@ class DashboardFeature(reducer: DashboardReducer) : Feature<DashboardCommand, Da
 
     init {
         coroutineScope.launch {
-            execute(DashboardCommand.GetProjects)
+            CredentialsDialogControls.open = {
+                coroutineScope.launch {
+                    execute(DashboardCommand.CredentialsDialog.OpenCredentialsDialog)
+                }
+            }
+
+            execute(DashboardCommand.Projects.GetProjects)
         }
 
         invokeOnClose {

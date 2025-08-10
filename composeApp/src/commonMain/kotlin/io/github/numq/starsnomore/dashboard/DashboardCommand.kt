@@ -1,17 +1,35 @@
 package io.github.numq.starsnomore.dashboard
 
+import io.github.numq.starsnomore.credentials.Credentials
 import io.github.numq.starsnomore.sorting.SortingType
 
 sealed interface DashboardCommand {
-    data object StartLoading : DashboardCommand
+    sealed interface ContextMenu : DashboardCommand {
+        data object OpenContextMenu : ContextMenu
 
-    data object GetProjects : DashboardCommand
+        data object CloseContextMenu : ContextMenu
+    }
 
-    data object RefreshProjects : DashboardCommand
+    sealed interface CredentialsDialog : DashboardCommand {
+        data object GetCredentials : CredentialsDialog
 
-    data class SortProjects(val type: SortingType) : DashboardCommand
+        data object OpenCredentialsDialog : CredentialsDialog
 
-    data object OpenContextMenu : DashboardCommand
+        data class UpdateCredentialsDialog(val credentials: Credentials) : CredentialsDialog
 
-    data object CloseContextMenu : DashboardCommand
+        data object CloseCredentialsDialog : CredentialsDialog
+
+        data object ToggleTokenVisibility : CredentialsDialog
+    }
+
+    sealed interface Projects : DashboardCommand {
+        data object StartLoading : Projects
+
+        data object GetProjects : Projects
+
+        data object RefreshProjects : Projects
+
+        data class SortProjects(val type: SortingType) : Projects
+    }
+
 }

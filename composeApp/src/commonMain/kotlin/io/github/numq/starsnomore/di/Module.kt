@@ -1,8 +1,10 @@
 package io.github.numq.starsnomore.di
 
+import io.github.numq.starsnomore.credentials.CredentialsDialogControls
 import io.github.numq.starsnomore.credentials.CredentialsManager
-import io.github.numq.starsnomore.dashboard.DashboardFeature
-import io.github.numq.starsnomore.dashboard.DashboardReducer
+import io.github.numq.starsnomore.credentials.GetCredentials
+import io.github.numq.starsnomore.credentials.UpdateCredentials
+import io.github.numq.starsnomore.dashboard.*
 import io.github.numq.starsnomore.navigation.NavigationFeature
 import io.github.numq.starsnomore.navigation.NavigationReducer
 import io.github.numq.starsnomore.project.*
@@ -30,24 +32,32 @@ private val application = module {
             }
         }
     } bind HttpClient::class onClose { it?.close() }
-
-    single { CredentialsManager.Default(get()) } bind CredentialsManager::class
 }
 
 private val navigation = module {
-    single { NavigationReducer() }
+    factory { NavigationReducer() }
     single { NavigationFeature(get()) } onClose { it?.close() }
+}
+
+private val credentials = module {
+    single { CredentialsDialogControls }
+    single { CredentialsManager.Default(get()) } bind CredentialsManager::class
+    factory { GetCredentials(get()) }
+    factory { UpdateCredentials(get()) }
 }
 
 private val project = module {
     single { GitHubProjectService(get(), get(), get()) } bind ProjectService::class
     single { GitHubProjectRepository(get()) } bind ProjectRepository::class
-    single { GetProjects(get()) }
+    factory { GetProjects(get()) }
 }
 
 private val dashboard = module {
-    single { DashboardReducer(get()) }
+    factory { ContextMenuReducer() }
+    factory { CredentialsDialogReducer(get(), get(), get()) }
+    factory { ProjectsReducer(get()) }
+    factory { DashboardReducer(get(), get(), get()) }
     single { DashboardFeature(get()) } onClose { it?.close() }
 }
 
-internal val appModule = listOf(application, navigation, project, dashboard)
+internal val appModule = listOf(application, navigation, credentials, project, dashboard)

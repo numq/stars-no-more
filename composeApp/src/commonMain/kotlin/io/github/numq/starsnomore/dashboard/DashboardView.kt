@@ -42,6 +42,8 @@ fun DashboardView(feature: DashboardFeature = koinInject()) {
             listOf(
                 ContextMenuItem("Refresh", onClick = {
                     coroutineScope.launch {
+                        feature.execute(DashboardCommand.StartLoading)
+
                         feature.execute(DashboardCommand.RefreshProjects)
                     }
                 })

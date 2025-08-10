@@ -44,11 +44,7 @@ class DashboardReducer(
             }
         })
 
-        is DashboardCommand.RefreshProjects -> when (state) {
-            is DashboardState.Loading -> transition(state)
-
-            is DashboardState.Interactable -> reduce(state, DashboardCommand.GetProjects)
-        }
+        is DashboardCommand.RefreshProjects -> reduce(state, DashboardCommand.GetProjects)
 
         is DashboardCommand.SortProjects -> with(command) {
             when (state) {

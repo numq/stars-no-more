@@ -9,7 +9,6 @@ import io.github.numq.starsnomore.feature.mergeEvents
 class CredentialsDialogReducer(
     private val getCredentials: GetCredentials,
     private val updateCredentials: UpdateCredentials,
-    private val projectsReducer: ProjectsReducer,
 ) : Reducer<DashboardCommand.CredentialsDialog, DashboardState, DashboardEvent> {
     override suspend fun reduce(
         state: DashboardState,
@@ -75,9 +74,14 @@ class CredentialsDialogReducer(
                 credentials = command.credentials
             )
         ).fold(onSuccess = {
-            val (updatedState, events) = reduce(state, DashboardCommand.CredentialsDialog.CloseCredentialsDialog)
-
-            projectsReducer.reduce(updatedState, DashboardCommand.Projects.RefreshProjects).mergeEvents(events)
+            reduce(
+                DashboardState.Loading(
+                    selectedSortingCriteria = state.selectedSortingCriteria,
+                    credentials = state.credentials,
+                    isCredentialsDialogVisible = state.isCredentialsDialogVisible,
+                    isCredentialsTokenVisible = state.isCredentialsTokenVisible
+                ), DashboardCommand.CredentialsDialog.CloseCredentialsDialog
+            ).mergeEvents(DashboardEvent.RefreshProjects)
         }, onFailure = { t ->
             when (t) {
                 is Exception -> transition(

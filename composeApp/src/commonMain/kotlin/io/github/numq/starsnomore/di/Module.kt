@@ -54,7 +54,7 @@ private val project = module {
 
 private val dashboard = module {
     factory { ContextMenuReducer() }
-    factory { CredentialsDialogReducer(get(), get(), get()) }
+    factory { CredentialsDialogReducer(get(), get()) }
     factory { ProjectsReducer(get()) }
     factory { DashboardReducer(get(), get(), get()) }
     single { DashboardFeature(get()) } onClose { it?.close() }

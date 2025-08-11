@@ -12,8 +12,7 @@ An application for getting a summary of statistics and traffic of a user's GitHu
 > [!NOTE]
 > Data is only available for repositories of type `owner`
 
-- Clone the repository
-- Build the project
+- Download latest release and install the application or clone the repository and build the project
 - Create a GitHub token with read-only access to public repositories
 - Use credentials via in-app input or in a credentials.json file in the following format:
   `{"name":"name","token":"token"}`

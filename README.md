@@ -18,6 +18,8 @@
 
 <p align="center"><img src="./media/preview.png" alt="preview"></p>
 
+<br>
+
 > The application was designed using the [Reduce & Conquer](https://github.com/numq/reduce-and-conquer) architectural
 > pattern
 

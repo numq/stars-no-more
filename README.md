@@ -1,8 +1,22 @@
-# Stars No More
+<h1 align="center">Stars No More</h1>
 
-An application for getting a summary of statistics and traffic of a user's GitHub repositories
+<div align="center" style="display: grid; justify-content: center;">
 
-![Preview](./media/preview.png)
+|                                                                  🌟                                                                   |                  Support this project                   |               
+|:-------------------------------------------------------------------------------------------------------------------------------------:|:-------------------------------------------------------:|
+|  <img src="https://raw.githubusercontent.com/ErikThiart/cryptocurrency-icons/master/32/bitcoin.png" alt="Bitcoin (BTC)" width="32"/>  | <code>bc1qs6qq0fkqqhp4whwq8u8zc5egprakvqxewr5pmx</code> | 
+| <img src="https://raw.githubusercontent.com/ErikThiart/cryptocurrency-icons/master/32/ethereum.png" alt="Ethereum (ETH)" width="32"/> | <code>0x3147bEE3179Df0f6a0852044BFe3C59086072e12</code> |
+|  <img src="https://raw.githubusercontent.com/ErikThiart/cryptocurrency-icons/master/32/tether.png" alt="USDT (TRC-20)" width="32"/>   |     <code>TKznmR65yhPt5qmYCML4tNSWFeeUkgYSEV</code>     |
+
+</div>
+
+<br>
+
+<p align="center">An application for getting a summary of statistics and traffic of a user's GitHub repositories</p>
+
+<br>
+
+<p align="center"><img src="./media/preview.png" alt="preview"></p>
 
 > The application was designed using the [Reduce & Conquer](https://github.com/numq/reduce-and-conquer) architectural
 > pattern

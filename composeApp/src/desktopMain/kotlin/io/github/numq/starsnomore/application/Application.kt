@@ -30,7 +30,7 @@ import io.github.numq.starsnomore.theme.StarsNoMoreTheme
 import org.koin.compose.koinInject
 import org.koin.core.context.GlobalContext.startKoin
 
-private const val APP_NAME = "Stars Not More"
+private const val APP_NAME = "Stars No More"
 
 private val minimumWindowSize = DpSize(900.dp, 600.dp)
 

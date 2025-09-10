@@ -13,14 +13,14 @@ interface CredentialsManager {
     fun updateCredentials(credentials: Credentials): Result<Unit>
 
     class Default(private val json: Json) : CredentialsManager {
-        private val FILE_PATH = "${File(System.getProperty("user.dir")).parent}/credentials.json"
+        private val filePath = "${File(System.getProperty("user.dir"))}/credentials.json"
 
         private val _credentials = MutableStateFlow(loadCredentials())
 
         override val credentials = _credentials.asStateFlow()
 
         private fun loadCredentials(): Credentials {
-            val file = File(FILE_PATH)
+            val file = File(filePath)
 
             return when {
                 !file.exists() -> {
@@ -36,7 +36,7 @@ interface CredentialsManager {
         }
 
         override fun updateCredentials(credentials: Credentials) = runCatching {
-            File(FILE_PATH).writeText(Json.encodeToString(_credentials.updateAndGet { credentials }))
+            File(filePath).writeText(Json.encodeToString(_credentials.updateAndGet { credentials }))
         }
     }
 }

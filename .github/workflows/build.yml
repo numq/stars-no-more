@@ -27,6 +27,11 @@ jobs:
           name: windows
           path: composeApp/build/compose/binaries/main/exe/*.exe
 
+      - name: Rename uploaded file
+        run: |
+          mv composeApp/build/compose/binaries/main/exe/*.exe \
+             composeApp/build/compose/binaries/main/exe/stars-no-more-1.0.0.exe
+
   build-mac:
     runs-on: macos-latest
     steps:
@@ -50,6 +55,11 @@ jobs:
           name: macos
           path: composeApp/build/compose/binaries/main/dmg/*.dmg
 
+      - name: Rename uploaded file
+        run: |
+          mv composeApp/build/compose/binaries/main/dmg/*.dmg \
+             composeApp/build/compose/binaries/main/dmg/stars-no-more-1.0.0.dmg
+
   build-linux:
     runs-on: ubuntu-latest
     steps:
@@ -72,3 +82,8 @@ jobs:
         with:
           name: linux
           path: composeApp/build/compose/binaries/main/deb/*.deb
+
+      - name: Rename uploaded file
+        run: |
+          mv composeApp/build/compose/binaries/main/deb/*.deb \
+             composeApp/build/compose/binaries/main/deb/stars-no-more-1.0.0.deb
